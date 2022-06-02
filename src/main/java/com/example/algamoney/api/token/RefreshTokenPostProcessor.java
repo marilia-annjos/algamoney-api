@@ -1,7 +1,6 @@
 package com.example.algamoney.api.token;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -22,7 +21,6 @@ public class RefreshTokenPostProcessor implements ResponseBodyAdvice<OAuth2Acces
 
 	@Override
 	public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-		System.out.println("returnType.getMethod().getName(): " + returnType.getMethod().getName());
 		return returnType.getMethod().getName().equals("postAccessToken");
 	}
 
@@ -31,33 +29,29 @@ public class RefreshTokenPostProcessor implements ResponseBodyAdvice<OAuth2Acces
 			MediaType selectedContentType, Class<? extends HttpMessageConverter<?>> selectedConverterType,
 			ServerHttpRequest request, ServerHttpResponse response) {
 		
-		HttpServletRequest req = ((ServletServerHttpRequest)request).getServletRequest();
-		HttpServletResponse resp = ((ServletServerHttpResponse)response).getServletResponse();
-		DefaultOAuth2AccessToken token = (DefaultOAuth2AccessToken)body;
+		HttpServletRequest req = ((ServletServerHttpRequest) request).getServletRequest();
+		HttpServletResponse resp = ((ServletServerHttpResponse) response).getServletResponse();
 		
-		if (body.getRefreshToken() != null) {
-			String refleshToken = body.getRefreshToken().getValue();
-			adicionarRefreshTokenCookie(refleshToken, req, resp);
-			removerRefleshTokenBody(token);
-		} else {
-			String refleshToken = body.getValue();
-			adicionarRefreshTokenCookie(refleshToken, req, resp);
-		}
-		return null;
-		// TODO Auto-generated method stub
-    }
-
-	private void removerRefleshTokenBody(DefaultOAuth2AccessToken token) {
-		//token.setRefreshToken(null);
+		DefaultOAuth2AccessToken token = (DefaultOAuth2AccessToken) body;
+		
+		String refreshToken = body.getRefreshToken().getValue();
+		adicionarRefreshTokenNoCookie(refreshToken, req, resp);
+		removerRefreshTokenDoBody(token);
+		
+		return body;
 	}
 
-	private void adicionarRefreshTokenCookie(String refleshToken, HttpServletRequest req, HttpServletResponse resp) {
-		Cookie refleshTokenCookie = new Cookie("refleshToken", refleshToken);
-		refleshTokenCookie.setHttpOnly(true);
-		refleshTokenCookie.setSecure(false);//TODO: Mudar para true em producao
-		refleshTokenCookie.setPath(req.getContextPath() + "/oauth/token");
-		refleshTokenCookie.setMaxAge(2592000);
-		resp.addCookie(refleshTokenCookie);
+	private void removerRefreshTokenDoBody(DefaultOAuth2AccessToken token) {
+		token.setRefreshToken(null);
+	}
+
+	private void adicionarRefreshTokenNoCookie(String refreshToken, HttpServletRequest req, HttpServletResponse resp) {
+		Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+		refreshTokenCookie.setHttpOnly(true);
+		refreshTokenCookie.setSecure(false); // TODO: Mudar para true em producao
+		refreshTokenCookie.setPath(req.getContextPath() + "/oauth/token");
+		refreshTokenCookie.setMaxAge(2592000);
+		resp.addCookie(refreshTokenCookie);
 	}
 
 }

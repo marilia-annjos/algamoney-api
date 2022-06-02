@@ -19,23 +19,22 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)//prioridade de execução alta
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class RefreshTokenCookiePreProcessorFilter implements Filter {
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
-
+		
 		HttpServletRequest req = (HttpServletRequest) request;
 		
-		if ("/oauth/token".equalsIgnoreCase(req.getRequestURI())
-				&& "reflesh_token".equals(req.getParameter("grant-type"))
+		if ("/oauth/token".equalsIgnoreCase(req.getRequestURI()) 
+				&& "refresh_token".equals(req.getParameter("grant_type"))
 				&& req.getCookies() != null) {
-			
 			for (Cookie cookie : req.getCookies()) {
-				if (cookie.getName().equalsIgnoreCase("refleshToken")) {
-					String valorReflashToken = cookie.getValue();
-					req = new MyServletRequestWrapper(req, valorReflashToken);
+				if (cookie.getName().equals("refreshToken")) {
+					String refreshToken = cookie.getValue();
+					req = new MyServletRequestWrapper(req, refreshToken);
 				}
 			}
 		}
@@ -45,33 +44,31 @@ public class RefreshTokenCookiePreProcessorFilter implements Filter {
 	
 	@Override
 	public void destroy() {
-		// TODO Auto-generated method stub
-		Filter.super.destroy();
+		
 	}
-	
+
 	@Override
-	public void init(FilterConfig filterConfig) throws ServletException {
-		// TODO Auto-generated method stub
-		Filter.super.init(filterConfig);
+	public void init(FilterConfig arg0) throws ServletException {
+		
 	}
 	
 	static class MyServletRequestWrapper extends HttpServletRequestWrapper {
 
-		private String aRefleshToken  = "";
-		public MyServletRequestWrapper(HttpServletRequest request, String pRefleshToken) {
+		private String refreshToken;
+		
+		public MyServletRequestWrapper(HttpServletRequest request, String refreshToken) {
 			super(request);
-			this.aRefleshToken = pRefleshToken;
-			
+			this.refreshToken = refreshToken;
 		}
 		
 		@Override
 		public Map<String, String[]> getParameterMap() {
-			// TODO Auto-generated method stub
 			ParameterMap<String, String[]> map = new ParameterMap<>(getRequest().getParameterMap());
-			map.put("refleshToken", new String[] {aRefleshToken});
+			map.put("refresh_token", new String[] { refreshToken });
 			map.setLocked(true);
 			return map;
-		}		
+		}
+		
 	}
 
 }
